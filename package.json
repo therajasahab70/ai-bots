@@ -1,0 +1,14 @@
+{
+  "name": "whatsapp-ai-responder",
+  "version": "1.0.0",
+  "description": "WhatsApp AI Bot with Gemini and Pairing Code",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.1.0",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.26.0"
+  }
+}
