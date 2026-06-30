@@ -31,42 +31,43 @@ const genAI = new GoogleGenerativeAI(
 async function AIReply(text){
 
   const model = genAI.getGenerativeModel({
-    model:"gemini-1.5-flash"
+    model: "gemini-1.5-flash"
   });
 
-
   const result = await model.generateContent(
-    "Answer like WhatsApp AI assistant:\n"+text
+    "Reply like WhatsApp AI assistant. Same language as user:\n" + text
   );
 
-
   return result.response.text();
-
 }
-
 
 
 
 async function startBot(){
 
-
 console.log("BOT STARTING...");
 
 
 const {state,saveCreds} =
-await useMultiFileAuthState("./newsession");
+await useMultiFileAuthState(
+"./session"
+);
 
 
 
 const sock = makeWASocket({
 
- auth:state,
+auth:state,
 
- logger:pino({
-   level:"silent"
- }),
+logger:pino({
+ level:"silent"
+}),
 
- printQRInTerminal:false
+browser:[
+ "Chrome",
+ "Linux",
+ "1.0"
+]
 
 });
 
@@ -84,9 +85,6 @@ sock.ev.on(
 (update)=>{
 
 
-console.log("CONNECTION UPDATE");
-
-
 const {
  connection,
  qr,
@@ -95,18 +93,22 @@ const {
 
 
 
+console.log(
+"CONNECTION:",
+connection
+);
+
+
+
 if(qr){
 
-console.log("==========");
-console.log("SCAN QR CODE");
-console.log("==========");
-
+console.log("SCAN QR CODE:");
 
 QRCode.generate(
- qr,
- {
-  small:true
- }
+qr,
+{
+ small:true
+}
 );
 
 }
@@ -125,13 +127,12 @@ console.log(
 
 if(connection==="close"){
 
-
 let reason =
 lastDisconnect?.error?.output?.statusCode;
 
 
 console.log(
-"CONNECTION CLOSED",
+"CLOSED:",
 reason
 );
 
@@ -140,11 +141,10 @@ reason
 if(reason !== DisconnectReason.loggedOut){
 
 setTimeout(()=>{
- startBot();
+startBot();
 },5000);
 
 }
-
 
 }
 
@@ -185,7 +185,7 @@ return;
 
 
 console.log(
-"NEW MESSAGE:",
+"MSG:",
 text
 );
 
@@ -209,25 +209,25 @@ msg.key.remoteJid,
 
 
 console.log(
-"REPLY SENT"
+"REPLY DONE"
 );
 
 
 
 }catch(e){
 
-console.log(e);
+console.log(
+"AI ERROR",
+e
+);
 
 }
-
 
 
 });
 
 
-
 }
-
 
 
 startBot();
