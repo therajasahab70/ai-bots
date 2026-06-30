@@ -1,13 +1,12 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const { GoogleGenAI } = require('@google/generative-ai');
 
-// ================== CONFIGURATION ==================
-const MY_PHONE_NUMBER = '917017659124'; // Apna WhatsApp number (With 91)
-const GEMINI_API_KEY = 'AQ.Ab8RN6JokgCn4pvENWzOdWDb0fL72YKVklU3WnAhIp8MAgV3rw'; // Apni Gemini API Key yahan paste karein
-// ===================================================
+// Render ke environment variable se configurations read karna
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY; 
+const MY_PHONE_NUMBER = process.env.PHONE_NUMBER; 
 
-// AI Setup: Is tarike se ab "not a constructor" ka error 100% nahi aayega
-const ai = new GoogleGenAI(GEMINI_API_KEY);
+// Sahi crash-free syntax initialization
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 const model = ai.getGenerativeModel({ 
     model: 'gemini-1.5-flash',
     systemInstruction: "Aap ek WhatsApp AI assistant hain. User busy hai, isliye aap Hinglish me polite aur short reply de rahe hain."
@@ -51,10 +50,9 @@ client.on('ready', () => {
 client.on('message', async (msg) => {
     try {
         const chat = await msg.getChat();
-        if (chat.isGroup) return; // Groups ko ignore karein
+        if (chat.isGroup) return; 
 
         if (msg.type === 'chat') {
-            console.log(`Message aaya: ${msg.body}`);
             const result = await model.generateContent(msg.body);
             const aiResponse = result.response.text();
             await msg.reply(aiResponse);
