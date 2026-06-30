@@ -1,13 +1,12 @@
 {
-  "name": "gemini-whatsapp-bot",
-  "version": "1.0.0",
-  "scripts": {
-    "start": "node index.js"
-  },
-  "dependencies": {
-    "@whiskeysockets/baileys": "latest",
-    "@google/generative-ai": "latest",
-    "express": "latest",
-    "pino": "latest"
-  }
+ "scripts":{
+  "start":"node index.js"
+ },
+ "dependencies":{
+  "@whiskeysockets/baileys":"6.7.18",
+  "@google/generative-ai":"latest",
+  "express":"latest",
+  "pino":"latest",
+  "qrcode-terminal":"latest"
+ }
 }
