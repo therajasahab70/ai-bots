@@ -1,11 +1,11 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const { GoogleGenAI } = require('@google/generative-ai');
 
-// Render ke environment variable se configurations read karna
+// Render ke environment setting se fetch karna
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY; 
 const MY_PHONE_NUMBER = process.env.PHONE_NUMBER; 
 
-// Sahi crash-free syntax initialization
+// Bilkul crash-free initialize syntax
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 const model = ai.getGenerativeModel({ 
     model: 'gemini-1.5-flash',
