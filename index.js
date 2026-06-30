@@ -1,72 +1,87 @@
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const { GoogleGenAI } = require('@google/generative-ai');
+const pino = require('pino');
 
 // ================== CONFIGURATION ==================
-const MY_PHONE_NUMBER = '917017659124'; // Yahan apna WhatsApp number daalein (With 91)
-const GEMINI_API_KEY = 'AQ.Ab8RN6JokgCn4pvENWzOdWDb0fL72YKVklU3WnAhIp8MAgV3rw'; // Yahan apni Gemini API Key paste karein
+const GEMINI_API_KEY = 'AQ.Ab8RN6JokgCn4pvENWzOdWDb0fL72YKVklU3WnAhIp8MAgV3rw'; // Apni Gemini API Key yahan dalein
+const MY_PHONE_NUMBER = '917017659124'; // Apna WhatsApp number dalein (With 91)
 // ===================================================
 
-// AI Setup (New official syntax ke sath - ab error nahi aayega)
+// Gemini AI Setup
 const ai = new GoogleGenAI(GEMINI_API_KEY);
 const model = ai.getGenerativeModel({ 
     model: 'gemini-1.5-flash',
     systemInstruction: "Aap ek WhatsApp AI assistant hain. User abhi busy hai, isliye aap uski taraf se doston aur clients ko chat par short, polite aur helpful jawab de rahe hain. Hamesha Hinglish (Hindi + English mix) me jawab dein."
 });
 
-const client = new Client({
-    authStrategy: new LocalAuth(),
-    puppeteer: {
-        headless: true,
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--no-zygote',
-            '--single-process',
-            '--disable-gpu'
-        ],
-    }
-});
+async function startBot() {
+    // Session save karne ke liye settings
+    const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
 
-// Pairing Code Generation Logic
-client.on('qr', async (qr) => {
-    try {
-        console.log('Pairing Code request kar rahe hain...');
-        const pairingCode = await client.requestPairingCode(MY_PHONE_NUMBER);
-        console.log('\n======================================');
-        console.log(`AAPKA WHATSAPP PAIRING CODE HAI: ${pairingCode}`);
-        console.log('======================================\n');
-        console.log('Apne phone me WhatsApp -> Linked Devices -> Link with phone number me jaakar ye code dalein.');
-    } catch (err) {
-        console.error('Pairing code error aaya:', err);
-    }
-});
+    const sock = makeWASocket({
+        auth: state,
+        logger: pino({ level: 'silent' }),
+        printQRInTerminal: false // Hum pairing code use karenge
+    });
 
-client.on('ready', () => {
-    console.log('WhatsApp AI Bot ready hai aur successfully kaam kar raha hai!');
-});
+    // Credential update hone par save karne ke liye
+    sock.ev.on('creds.update', saveCreds);
 
-// AI Automatic Reply Logic
-client.on('message', async (msg) => {
-    try {
-        const chat = await msg.getChat();
-        if (chat.isGroup) return; // Groups ko ignore karein
+    // Connection Status Manage karne ke liye
+    sock.ev.on('connection.update', async (update) => {
+        const { connection, lastDisconnect, qr } = update;
 
-        if (msg.type === 'chat') {
-            console.log(`Message aaya (${msg.from}): ${msg.body}`);
+        if (connection === 'close') {
+            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+            console.log('Connection close ho gaya. Reconnecting...', shouldReconnect);
+            if (shouldReconnect) startBot();
+        } else if (connection === 'open') {
+            console.log('WhatsApp AI Bot successfully connect ho gaya hai!');
+        }
 
-            // AI Response generation
-            const result = await model.generateContent(msg.body);
+        // Agar pairing code ki zaroorat hai
+        if (!sock.authState.creds.registered) {
+            try {
+                setTimeout(async () => {
+                    let code = await sock.requestPairingCode(MY_PHONE_NUMBER);
+                    console.log('\n======================================');
+                    console.log(`AAPKA WHATSAPP PAIRING CODE HAI: ${code}`);
+                    console.log('======================================\n');
+                    console.log('WhatsApp -> Linked Devices -> Link with phone number me jaakar ye code dalein.');
+                }, 3000);
+            } catch (err) {
+                console.error('Pairing code lene me dikkat aayi:', err);
+            }
+        }
+    });
+
+    // Automatic AI Reply Logic
+    sock.ev.on('messages.upsert', async (m) => {
+        const msg = m.messages[0];
+        if (!msg.message || msg.key.fromMe) return;
+
+        const from = msg.key.remoteJid;
+        
+        // Groups ko ignore karne ke liye
+        if (from.endsWith('@g.us')) return;
+
+        // Message text nikalna
+        const textMessage = msg.message.conversation || msg.message.extendedTextMessage?.text;
+        if (!textMessage) return;
+
+        try {
+            console.log(`Message aaya: ${textMessage}`);
+
+            // Gemini AI se reply generate karwana
+            const result = await model.generateContent(textMessage);
             const aiResponse = result.response.text();
 
-            // WhatsApp par reply bhejna
-            await msg.reply(aiResponse);
+            // Reply bhejna
+            await sock.sendMessage(from, { text: aiResponse }, { quoted: msg });
+        } catch (error) {
+            console.error('AI reply dene me error:', error);
         }
-    } catch (error) {
-        console.error('AI reply dene me error aaya:', error);
-    }
-});
+    });
+}
 
-client.initialize();
+startBot();
