@@ -1,15 +1,14 @@
 {
-  "name": "whatsapp-ai-baileys",
+  "name": "whatsapp-ai-bot",
   "version": "1.0.0",
-  "description": "WhatsApp AI Bot with Gemini and Baileys",
+  "description": "WhatsApp AI Bot using Gemini",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
-    "@whiskeysockets/baileys": "^6.7.9",
-    "pino": "^9.0.0",
-    "qrcode-terminal": "^0.12.0"
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.26.0"
   }
 }
