@@ -1,65 +1,96 @@
-const { Client, LocalAuth } = require('whatsapp-web.js');
-const { GoogleGenAI } = require('@google/generative-ai');
+const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
+const pino = require("pino");
+const express = require("express");
+const OpenAI = require("openai");
 
-// Render ke environment setting se fetch karna
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY; 
-const MY_PHONE_NUMBER = process.env.PHONE_NUMBER; 
+const app = express();
 
-// Bilkul crash-free initialize syntax
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-const model = ai.getGenerativeModel({ 
-    model: 'gemini-1.5-flash',
-    systemInstruction: "Aap ek WhatsApp AI assistant hain. User busy hai, isliye aap Hinglish me polite aur short reply de rahe hain."
+app.get("/", (req,res)=>{
+    res.send("AI WhatsApp Bot Running");
 });
 
-const client = new Client({
-    authStrategy: new LocalAuth(),
-    puppeteer: {
-        headless: true,
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--no-zygote',
-            '--single-process',
-            '--disable-gpu'
-        ],
-    }
+app.listen(process.env.PORT || 3000);
+
+
+const client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
 });
 
-// Yahan se aapko logs me 8-digit ka Pairing Code milega link karne ke liye
-client.on('qr', async (qr) => {
-    try {
-        console.log('Pairing Code request kar rahe hain...');
-        const pairingCode = await client.requestPairingCode(MY_PHONE_NUMBER);
-        console.log('\n======================================');
-        console.log(`AAPKA WHATSAPP PAIRING CODE HAI: ${pairingCode}`);
-        console.log('======================================\n');
-        console.log('Apne phone me WhatsApp -> Linked Devices -> Link with phone number me jaakar ye code dalein.');
-    } catch (err) {
-        console.error('Pairing code error aaya:', err);
-    }
+
+async function askAI(text){
+
+    const response = await client.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages:[
+            {
+                role:"system",
+                content:"You are a helpful WhatsApp assistant. Reply in the same language as the user."
+            },
+            {
+                role:"user",
+                content:text
+            }
+        ]
+    });
+
+    return response.choices[0].message.content;
+}
+
+
+
+async function startBot(){
+
+const {state,saveCreds}=await useMultiFileAuthState("./session");
+
+
+const sock=makeWASocket({
+    auth:state,
+    logger:pino({level:"silent"})
 });
 
-client.on('ready', () => {
-    console.log('WhatsApp Bot successfully ready ho gaya hai!');
+
+if(!sock.authState.creds.registered){
+
+let phone="917017659124";
+
+let code=await sock.requestPairingCode(phone);
+
+console.log("PAIR CODE:",code);
+
+}
+
+
+sock.ev.on("creds.update",saveCreds);
+
+
+
+sock.ev.on("messages.upsert",async({messages})=>{
+
+const msg=messages[0];
+
+if(!msg.message) return;
+if(msg.key.fromMe) return;
+
+
+let text =
+msg.message.conversation ||
+msg.message.extendedTextMessage?.text;
+
+
+let sender=msg.key.remoteJid;
+
+
+let reply=await askAI(text);
+
+
+await sock.sendMessage(sender,{
+text:reply
 });
 
-client.on('message', async (msg) => {
-    try {
-        const chat = await msg.getChat();
-        if (chat.isGroup) return; 
 
-        if (msg.type === 'chat') {
-            const result = await model.generateContent(msg.body);
-            const aiResponse = result.response.text();
-            await msg.reply(aiResponse);
-        }
-    } catch (error) {
-        console.error('AI Reply Error:', error);
-    }
 });
 
-client.initialize();
+
+}
+
+startBot();
