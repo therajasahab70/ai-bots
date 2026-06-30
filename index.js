@@ -2,15 +2,15 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const { GoogleGenAI } = require('@google/generative-ai');
 
 // ================== CONFIGURATION ==================
-const MY_PHONE_NUMBER = '917017659124'; // 1. Apna WhatsApp number dalein
-const GEMINI_API_KEY = 'AQ.Ab8RN6JokgCn4pvENWzOdWDb0fL72YKVklU3WnAhIp8MAgV3rw'; // 2. Apni Gemini API Key dalein
+const MY_PHONE_NUMBER = '917017659124'; // Apna WhatsApp number (With 91)
+const GEMINI_API_KEY = 'AQ.Ab8RN6JokgCn4pvENWzOdWDb0fL72YKVklU3WnAhIp8MAgV3rw'; // Apni Gemini API Key yahan paste karein
 // ===================================================
 
-// AI Setup: New version me GoogleGenAI function ko bina 'new' keyword ke initialize karte hain
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+// AI Setup: Is tarike se ab "not a constructor" ka error 100% nahi aayega
+const ai = new GoogleGenAI(GEMINI_API_KEY);
 const model = ai.getGenerativeModel({ 
     model: 'gemini-1.5-flash',
-    systemInstruction: "Aap ek WhatsApp AI assistant hain. User abhi busy hai, isliye aap uski taraf se short aur polite jawab Hinglish me de rahe hain."
+    systemInstruction: "Aap ek WhatsApp AI assistant hain. User busy hai, isliye aap Hinglish me polite aur short reply de rahe hain."
 });
 
 const client = new Client({
@@ -30,18 +30,17 @@ const client = new Client({
     }
 });
 
-// YAHAN HAI PAIRING CODE KA OPTION!
+// Yahan se aapko logs me 8-digit ka Pairing Code milega link karne ke liye
 client.on('qr', async (qr) => {
     try {
         console.log('Pairing Code request kar rahe hain...');
-        // Ye line WhatsApp server se 8-digit ka code mangwayegi
         const pairingCode = await client.requestPairingCode(MY_PHONE_NUMBER);
         console.log('\n======================================');
         console.log(`AAPKA WHATSAPP PAIRING CODE HAI: ${pairingCode}`);
         console.log('======================================\n');
         console.log('Apne phone me WhatsApp -> Linked Devices -> Link with phone number me jaakar ye code dalein.');
     } catch (err) {
-        console.error('Pairing code lene me error aaya:', err);
+        console.error('Pairing code error aaya:', err);
     }
 });
 
