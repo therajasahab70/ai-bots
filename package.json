@@ -1,0 +1,11 @@
+{
+"name":"whatsapp-ai-bot",
+"version":"1.0.0",
+"scripts":{"start":"node index.js"},
+"dependencies":{
+"@whiskeysockets/baileys":"latest",
+"@google/generative-ai":"latest",
+"express":"latest",
+"pino":"latest"
+}
+}
