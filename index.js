@@ -6,9 +6,9 @@ const MY_PHONE_NUMBER = '917017659124'; // Yahan apna WhatsApp number daalein (W
 const GEMINI_API_KEY = 'AQ.Ab8RN6JokgCn4pvENWzOdWDb0fL72YKVklU3WnAhIp8MAgV3rw'; // Yahan apni Gemini API Key paste karein
 // ===================================================
 
-// AI Setup (Sabse basic aur crash-free tarika)
-const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-const model = genAI.getGenerativeModel({ 
+// AI Setup (New official syntax ke sath - ab error nahi aayega)
+const ai = new GoogleGenAI(GEMINI_API_KEY);
+const model = ai.getGenerativeModel({ 
     model: 'gemini-1.5-flash',
     systemInstruction: "Aap ek WhatsApp AI assistant hain. User abhi busy hai, isliye aap uski taraf se doston aur clients ko chat par short, polite aur helpful jawab de rahe hain. Hamesha Hinglish (Hindi + English mix) me jawab dein."
 });
