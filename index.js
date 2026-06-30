@@ -45,7 +45,7 @@ async function startBot() {
 
     if (!sock.authState.creds.registered) {
 
-        let phone = "91XXXXXXXXXX";
+        let phone = "917017659124";
         // 👆 yaha apna WhatsApp number country code ke sath dale
 
 
