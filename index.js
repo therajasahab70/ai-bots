@@ -2,8 +2,8 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const { GoogleGenAI } = require('@google/generative-ai');
 
 // ================== CONFIGURATION ==================
-const MY_PHONE_NUMBER = '91XXXXXXXXXX'; // 1. Yahan apna WhatsApp number daalein (With 91)
-const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY'; // 2. Yahan apni Gemini API Key daalein
+const MY_PHONE_NUMBER = '917017659124'; // 1. Yahan apna WhatsApp number daalein (With 91)
+const GEMINI_API_KEY = 'AQ.Ab8RN6JokgCn4pvENWzOdWDb0fL72YKVklU3WnAhIp8MAgV3rw'; // 2. Yahan apni Gemini API Key daalein
 // ===================================================
 
 // AI Setup
